@@ -6,11 +6,7 @@
 ##This is my personal copy of the Balanced Sampling package.
 
 
-Type: Package
-
 Title: Balanced and Spatially Balanced Sampling
-
-Version: 1.5.2
 
 Author: Anton Grafström, Jonathan Lisic
 

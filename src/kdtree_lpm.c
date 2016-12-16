@@ -339,6 +339,7 @@ size_t find_nn_notMe(
   // first check if the query point is less than split 
   if( queryPoint[c->dim] <= c->split ) {
       nn = find_nn_notMe( r, c->left, query, queryPoint, dist, tieBreak );  
+
       // now check if there is a point in the split that can be close 
       distMin = queryPoint[c->dim] - c->split;
       distMin *= distMin;

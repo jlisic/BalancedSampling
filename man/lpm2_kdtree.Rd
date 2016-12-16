@@ -19,7 +19,8 @@ Local Pivotal Method
      m=40,
      algorithm = "kdtree", 
      maxCheck = 4,
-     termDist = 0.1
+     termDist = 0.1,
+     inOrder = FALSE
      ) 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -51,6 +52,10 @@ Local Pivotal Method
     is specified.  This parameter specifies a minimal sufficient distance to be 
     considered a nearest neighbor.  No tie handling is performed; the first 
     nearest neighbor found will be used. 
+  }
+  \item{inOrder}{
+    A boolean value, \code{TRUE} will return results in order of selection.
+    \code{FALSE} will return in order of index.
   }
 }
 \value{ 

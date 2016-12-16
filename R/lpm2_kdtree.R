@@ -4,7 +4,8 @@ lpm2_kdtree <- function(
   m=40,
   algorithm="kdtree",
   maxCheck=4,
-  termDist=.1
+  termDist=.1,
+  inOrder=FALSE
 ) {
 
   if(!is.matrix(x)) x <- as.matrix(x)
@@ -28,6 +29,12 @@ lpm2_kdtree <- function(
       stop(print("Specified algorithm does not exist.")) 
   }
 
+  if(inOrder) { 
+    recordOrder = rep(-1,n); 
+  } else {
+    recordOrder = -2
+  }
+
   # sanity check to avoid segfaults in R_lpm3 
   if( length(prob) != n ) stop(print("Length of probability vector does not match the number of rows in x."))
   
@@ -40,8 +47,21 @@ lpm2_kdtree <- function(
                  as.integer( m ),                   # max leaves per node
                  as.integer( algorithm ),           # algorithm to use 
                  as.integer( maxCheck ),            # number of leaves to check
-                 as.double( termDist )              # terminal distance 
+                 as.double( termDist ),             # terminal distance 
+                 as.integer(recordOrder)            # in order vector
   )
-  
-  return( (1:n)[ r.result[[2]] > .5 ] )
+
+  if(inOrder) {
+    selected <- r.result[[9]] != -1
+    return(which(selected)[r.result[[9]][selected]])
+  } else {
+    return( (1:n)[ r.result[[2]] > .5 ] )
+  }
 }
+
+
+
+
+
+
+

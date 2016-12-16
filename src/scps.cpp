@@ -17,7 +17,13 @@ bool scps_compare(double d1, double d2, double w1, double w2){
   return false;
 }
 
-void scps_quicksort(IntegerVector& index, NumericVector& dists, NumericVector& weights, int left, int right) {
+void scps_quicksort(
+    IntegerVector& index, 
+    NumericVector& dists, 
+    NumericVector& weights, 
+    int left, 
+    int right
+    ) {
  
     if (left < right) {
  
@@ -44,19 +50,36 @@ void scps_quicksort(IntegerVector& index, NumericVector& dists, NumericVector& w
 
 
 // [[Rcpp::export]]
-IntegerVector scps(NumericVector prob, NumericMatrix x){
+IntegerVector scps(
+    NumericVector prob, 
+    NumericMatrix x
+    ){
+
 	int N = prob.size();
 	int ncol = x.ncol();
+
 	NumericVector dists(N), weights(N), p(N);
   IntegerVector index(N), s(N);
   
 	double d,dp=0.0,weight,uw,eps=1e-9;
 	
 	for(int i=0;i<N;i++){p[i]=prob[i];}
-		
+	
+  // pre calculate randomm variables  
 	NumericVector rand = runif(N);
 	NumericVector rand2 = runif(N);
 	int nr, nr_others, i,j,k, m;
+
+  /* description of what is done:
+   *
+   * iter over i < N
+   *   if pi_i is greater than U_i then set s[i] to 1 else 0
+   * 
+   *   if i < N-1 then 
+   *     find NN for i in the set {i+1 to N-1}
+   *     
+   */ 
+
 
 	
 	for(i=0;i<N;i++){
@@ -66,8 +89,12 @@ IntegerVector scps(NumericVector prob, NumericMatrix x){
     // if not last unit, update others
 		if(i<N-1){	
       // find distances and max weights
+      
+      /* this can be fixed with a k-d tree */ 
 			for(k = i+1; k < N; k++){
 				d = 0.0;
+
+        // calc L2^2 
 				for(m=0;m<ncol;m++){
 					dp = x(i,m)-x(k,m);
 					d += dp*dp;
@@ -79,33 +106,40 @@ IntegerVector scps(NumericVector prob, NumericMatrix x){
 			}
 				
 			// Sort index w.r.t. dists, weights
+      // Sort by dist first then weights
 			scps_quicksort(index,dists,weights,0,N-i-2);
 			
 			// Weight to distribute
 			weight = 1.0;
       
       // Check if i can distribute weight
+      // we distribute if pi_i \in (0,1)
 			if(p[i] < 1 && p[i]>0){
         
         // Nr of potential recievers (at least 1)
 				nr_others = N-i-1;
          
 				for(k = 0; k < nr_others; k++){
-          // Nr at equal distance 
+
+          // this seems a bit wasteful, since we recalc for each k at equal dist -jjl
+          // Nr at equal distance  (get number of equal distant nodes)
           nr = 1;
           for(j=k+1;j<nr_others;j++){
             if(dists[index[k]]==dists[index[j]]){
   						nr = nr + 1;
 						}else{break;}
           }	
+
 					uw = std::min(weight/nr,weights[index[k]]);
 					// Update
 					p[i+index[k]+1] = p[i+index[k]+1]-(s[i]-p[i])*uw;
+
 					// Remove used weight
 					weight = weight-uw;
 					if(weight<eps){break;}
 				}
-			}	
+        Rprintf("%d: k = %d\n", (int) i, (int) k);
+			}	 // <- end weight distribution
 		}
 	}
   // make sample instead of indicator

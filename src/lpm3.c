@@ -82,7 +82,8 @@ void R_lpm3(
     int * mPtr,
     int * algorithmPtr,
     int * maxCountPtr,
-    double * termDist
+    double * termDist,
+    int * recordOrder
   ) {
 
   size_t n = (size_t) * nPtr;
@@ -95,6 +96,7 @@ void R_lpm3(
   GetRNGstate();
 
   size_t j;
+  size_t order=1;  // record in order
   size_t sampled;
   double dist;
   double * r1;
@@ -216,15 +218,27 @@ void R_lpm3(
     /* move is from the reverse mapping since we don't really know the index of k */
     /* it also is a bit more readable for j instead of grabbing sampled again */
     if( pi[j] == 0 || pi[j] == 1 ) {
-
       updateMapping(j,i,indexMap,reverseIndexMap);
       *(myTree->pointerIndex[j]) = n;  // ensure we can't find it again 
-
     } else {
-
       updateMapping(k,i,indexMap,reverseIndexMap);
       *(myTree->pointerIndex[k]) = n;  // ensure we can't find it again 
-
+    }
+      
+    // record in order
+    if(recordOrder[0] != -2) {
+      if( recordOrder[j] == -1 ) {
+        if(pi[j] == 1)  {
+          recordOrder[j] = (int) order;
+          order++;  
+        }
+      } 
+      if(pi[k] == 1) {
+        if( recordOrder[k] == -1 ) {
+          recordOrder[k] = (int) order;
+          order++;  
+        }
+      } 
     }
 
 

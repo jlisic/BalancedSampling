@@ -18,10 +18,12 @@
  #define RUNIF runif(0.0,1.0)
 #endif
 
+// Tree
+// The tree has a few key components:
+// root->pointerIndex: each element points to the i'th element in the tree 
 
 
-
-// function to create a new Tree 
+// function to create a new Tree  
 rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data ) {
   
   rootNodePtr y = malloc( sizeof( rootNode ) );
@@ -72,6 +74,7 @@ nodePtr buildIndex(
   size_t indexRightSize;
 
   nodePtr c = createNode(r);
+  // record to the tree structure the new tree 
   c->indexUsed = m;
   c->index = indexPtr;
   c->dim = dim;
@@ -83,6 +86,7 @@ nodePtr buildIndex(
 
     // save the final pointer locations 
     for( i = 0; i < m; i++) 
+      // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
       r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
 
     return c;

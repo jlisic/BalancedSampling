@@ -83,19 +83,20 @@ void R_lpm3(
     int * algorithmPtr,
     int * maxCountPtr,
     double * termDist,
-    int * recordOrder
+    int * recordOrder, 
+    int * drawsPtr /* resampling count */
   ) {
 
   size_t n = (size_t) * nPtr;
   size_t m = (size_t) * mPtr;
   size_t K = (size_t) * KPtr;
+  size_t draws = (size_t) * drawsPtr;
   size_t maxCount = (size_t) * maxCountPtr;
-  size_t i,k;
+  size_t i,j,k,l;
   double tieBreak; /* used to break ties */
 
   GetRNGstate();
 
-  size_t j;
   size_t order=1;  // record in order
   size_t sampled;
   double dist;
@@ -103,6 +104,8 @@ void R_lpm3(
   double * r2;
 
   size_t count;
+
+  size_t * backupTreeIndex = NULL;
 
 
   /***************************** CREATE RANDOM ***************************/
@@ -134,117 +137,147 @@ void R_lpm3(
   rootNodePtr myTree = createTree( K, m, n, x);
  
   myTree->root = buildIndex( myTree, 0, n, treeIndex ); 
- 
-  /* generate values ahead of time to be like lpm2 */ 
-  for( i = 0; i < n; i++) {
-    r1[i] = runif(0.0,1.0);
-  }
-
-  for( i = 0; i < n; i++) {
-    r2[i] = runif(0.0,1.0);
-  }
   /***************************** CREATE TREE *****************************/
 
-
-  /***************************** RUN ALGORITHM ***************************/
-  for( i = 0; i < n-1; i++) {
-
-    sampled = i + (size_t) floor( r1[i] * (n - i) );
-
-    /* randomly select j */
-    j = indexMap[sampled]; // j is the original index of the sampled data
-
-    if( j >=n  ) break;
-
-    // find neighbor
-    dist = INFINITY;
-    k = n;
-    tieBreak = -1;
-
-
-    /* algorithm 1 is a count bounded kdtree */
-    if( *algorithmPtr == 1 ) {
-      count = 0;
-      k = find_nn_notMe_count( 
-          myTree , 
-          myTree->root, 
-          j, 
-          &(x[j*K]), 
-          &dist, 
-          &tieBreak,
-          &count,
-          &maxCount
-          ); 
-    } else if( *algorithmPtr == 2 ) {
-    /* algorithm 2 is a distance bounded kdtree */
-      k = find_nn_notMe_dist( 
-          myTree , 
-          myTree->root, 
-          j, 
-          &(x[j*K]), 
-          &dist, 
-          &tieBreak,
-          termDist
-          ); 
-    } else {
-    /* algorithm 0 is a standard kd-tree */
-      k = find_nn_notMe( 
-          myTree , 
-          myTree->root, 
-          j, 
-          &(x[j*K]), 
-          &dist, 
-          &tieBreak
-          ); 
+  /* save a copy of the tree index */
+  if( draws > 1 ) {
+    backupTreeIndex = (size_t *) calloc( n , sizeof( size_t ) ); 
+    for( i=0; i< n; i++) {
+      backupTreeIndex[i] = *(myTree->pointerIndex[i]);  
     }
+  }
 
+ 
+  /***************************** RESAMPLE *****************************/
+  for( l=0; l < draws; l++) {
 
+    /* refresh the index */ 
+    if( l > 0 ) { 
+      /* offset pi */
+      /* need to make this more memory efficient */
+      pi = pi + n;
 
+      for( i=0; i< n; i++) {
+        indexMap[i]=i;
+        reverseIndexMap[i]=i;
+        *(myTree->pointerIndex[i]) =  backupTreeIndex[i]; 
+      }
+    } 
+
+    /* generate values ahead of time to be like lpm2 */ 
+    for( i = 0; i < n; i++) {
+      r1[i] = runif(0.0,1.0);
+      //printf("r1[%d] = %f\n", (int) i, r1[i]);
+    }
   
-    /* break if an invalid neighbor is selected */
-    if( k >=n  ) {
-      PRINTF("breaking on iteration %d, for k\n", (int) i);
-      break;
+    for( i = 0; i < n; i++) {
+      r2[i] = runif(0.0,1.0);
+      //printf("r2[%d] = %f\n", (int) i, r1[i]);
     }
+  
+  
+    /***************************** RUN ALGORITHM ***************************/
+    for( i = 0; i < n-1; i++) {
+  
+      sampled = i + (size_t) floor( r1[i] * (n - i) );
+  
+      /* randomly select j */
+      j = indexMap[sampled]; // j is the original index of the sampled data
+  
+      if( j >=n  ) break;
+  
+      // find neighbor
+      dist = INFINITY;
+      k = n;
+      tieBreak = -1;
+  
+  
+      /* algorithm 1 is a count bounded kdtree */
+      if( *algorithmPtr == 1 ) {
+        count = 0;
+        k = find_nn_notMe_count( 
+            myTree , 
+            myTree->root, 
+            j, 
+            &(x[j*K]), 
+            &dist, 
+            &tieBreak,
+            &count,
+            &maxCount
+            ); 
+      } else if( *algorithmPtr == 2 ) {
+      /* algorithm 2 is a distance bounded kdtree */
+        k = find_nn_notMe_dist( 
+            myTree , 
+            myTree->root, 
+            j, 
+            &(x[j*K]), 
+            &dist, 
+            &tieBreak,
+            termDist
+            ); 
+      } else {
+      /* algorithm 0 is a standard kd-tree */
+        k = find_nn_notMe( 
+            myTree , 
+            myTree->root, 
+            j, 
+            &(x[j*K]), 
+            &dist, 
+            &tieBreak
+            ); 
+      }
+  
+  
+  
+    
+      /* break if an invalid neighbor is selected */
+      if( k >=n  ) {
+        PRINTF("breaking on iteration %d, for k\n", (int) i);
+        break;
+      }
+  
+      updateProb( 
+         &( pi[j] ), 
+         &( pi[k] ), 
+         r2[i]
+         ); 
+  
+  
+      /* handle reverse mapping etc... */
+      /* move is from the reverse mapping since we don't really know the index of k */
+      /* it also is a bit more readable for j instead of grabbing sampled again */
+      if( pi[j] == 0 || pi[j] == 1 ) {
+        updateMapping(j,i,indexMap,reverseIndexMap);
+        *(myTree->pointerIndex[j]) = n;  // ensure we can't find it again 
+      } else {
+        updateMapping(k,i,indexMap,reverseIndexMap);
+        *(myTree->pointerIndex[k]) = n;  // ensure we can't find it again 
+      }
+        
+      // record in order
+      if(recordOrder[0] != -2) {
+        if( recordOrder[j] == -1 ) {
+          if(pi[j] == 1)  {
+            recordOrder[j] = (int) order;
+            order++;  
+          }
+        } 
+        if(pi[k] == 1) {
+          if( recordOrder[k] == -1 ) {
+            recordOrder[k] = (int) order;
+            order++;  
+          }
+        } 
+      }
+  
+  
+    } 
+    /***************************** RUN ALGORITHM ***************************/
 
-    updateProb( 
-       &( pi[j] ), 
-       &( pi[k] ), 
-       r2[i]
-       ); 
-
-
-    /* handle reverse mapping etc... */
-    /* move is from the reverse mapping since we don't really know the index of k */
-    /* it also is a bit more readable for j instead of grabbing sampled again */
-    if( pi[j] == 0 || pi[j] == 1 ) {
-      updateMapping(j,i,indexMap,reverseIndexMap);
-      *(myTree->pointerIndex[j]) = n;  // ensure we can't find it again 
-    } else {
-      updateMapping(k,i,indexMap,reverseIndexMap);
-      *(myTree->pointerIndex[k]) = n;  // ensure we can't find it again 
-    }
-      
-    // record in order
-    if(recordOrder[0] != -2) {
-      if( recordOrder[j] == -1 ) {
-        if(pi[j] == 1)  {
-          recordOrder[j] = (int) order;
-          order++;  
-        }
-      } 
-      if(pi[k] == 1) {
-        if( recordOrder[k] == -1 ) {
-          recordOrder[k] = (int) order;
-          order++;  
-        }
-      } 
-    }
-
-
-  } 
-  /***************************** RUN ALGORITHM ***************************/
-
+  }
+  /***************************** RUN RESAMPLE ***************************/
+  
 
   /* delete tree */
   deleteTree(myTree);
@@ -254,7 +287,8 @@ void R_lpm3(
   free(reverseIndexMap);
   free(r1);
   free(r2);
-  
+
+  if(backupTreeIndex != NULL) free(backupTreeIndex);  
   
   PutRNGstate();
   return;

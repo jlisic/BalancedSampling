@@ -15,14 +15,21 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
 	
 	double wp,lp,mindist,d,dp=0.0;
 	int ri,rj,count;
-	
-	for(int i=0;i<N;i++){index[i]=i; p[i]=prob[i];}
+
+  int i;  
+	for(i=0;i<N;i++){index[i]=i; p[i]=prob[i];}
 		
 	NumericVector r1 = runif(N);
 	NumericVector r2 = runif(N);
+
+  //for( i = 0; i < N;i++) printf("r1[%d] = %f\n", (int) i, r1[i]);
+  //for( i = 0; i < N;i++) printf("r2[%d] = %f\n", (int) i, r2[i]);
+
 	int move;
 	int temp;
 	double a;
+  //NumericVector tmp1(1);
+  //NumericVector tmp2(1);
 	
 	for(int i=0;i<N-1;i++){	
 		ri = i+floor((r1[i]*(N-i)));
@@ -47,7 +54,13 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
 				}
 			}
 		}
-		rj = nearest[floor(count*runif(1)[0])];
+	  // not needed if count	
+    if( count > 1 ) {
+      rj = nearest[floor(count*runif(1)[0])];
+    } else {
+      rj = nearest[0];
+    }
+    //printf("rj: %d\n", count);
 		a = p[index[ri]]+p[index[rj]];
 		if(a > 1){
 			wp = 1;
@@ -63,16 +76,28 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
 			p[index[rj]] = wp;
 		}
 		if(i==N-2){
-			if(runif(1)[0]<p[index[ri]]){
+      //printf("before p[index[ri]] = %f\n",p[index[ri]]);
+      //printf("before p[index[rj]] = %f\n",p[index[rj]]);
+
+      /*
+      tmp1 = runif(1);
+      tmp2 = runif(1);
+      printf("%f, %f\n", tmp1[0], tmp2[0]);
+      */
+			if(0.5<p[index[ri]]){
 				p[index[ri]]=1;
 			}else{
 				p[index[ri]]=0;
 			}
-			if(runif(1)[0]<p[index[rj]]){
+			if(0.5<p[index[rj]]){
 				p[index[rj]]=1;
 			}else{
 				p[index[rj]]=0;
 			}
+       
+      
+      //printf("after p[index[ri]] = %f\n",p[index[ri]]);
+      //printf("after p[index[rj]] = %f\n",p[index[rj]]);
 		}	
 		move = rj;
 		if( p[index[ri]]==0 || p[index[ri]]==1 ){

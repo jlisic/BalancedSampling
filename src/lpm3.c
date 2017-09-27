@@ -3,17 +3,7 @@
  * License: GPL (>=2) 
  */  
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <math.h>
-
-#include "R.h"
-#include "Rmath.h"
-#define PRINTF Rprintf
-
-#include "kdtree_lpm.h"
+#include "lpm3.h"
 
 
 

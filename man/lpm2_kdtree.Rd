@@ -20,7 +20,8 @@ Local Pivotal Method
      algorithm = "kdtree", 
      maxCheck = 4,
      termDist = 0.1,
-     inOrder = FALSE
+     inOrder = FALSE,
+     resample = 1
      ) 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -56,6 +57,10 @@ Local Pivotal Method
   \item{inOrder}{
     A boolean value, \code{TRUE} will return results in order of selection.
     \code{FALSE} will return in order of index.
+  }
+  \item{resample}{
+    The number of samples to return. Resampling builds the k-d tree exactly once
+    for all samples.  Each sample will be a distinct column in a matrix.
   }
 }
 \value{ 

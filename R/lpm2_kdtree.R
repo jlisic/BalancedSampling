@@ -50,7 +50,7 @@ lpm2_kdtree <- function(
                  as.integer( maxCheck ),            # number of leaves to check
                  as.double( termDist ),             # terminal distance 
                  as.integer(rep(recordOrder,resample)),           # in order vector
-                 as.integer(resample)               # number of samples to re-draw
+                 as.integer(resample)              # number of samples to re-draw
   )
 
   r.result <<- r.result

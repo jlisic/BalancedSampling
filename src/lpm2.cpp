@@ -60,7 +60,6 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
     } else {
       rj = nearest[0];
     }
-    //printf("rj: %d\n", count);
 		a = p[index[ri]]+p[index[rj]];
 		if(a > 1){
 			wp = 1;
@@ -76,14 +75,6 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
 			p[index[rj]] = wp;
 		}
 		if(i==N-2){
-      //printf("before p[index[ri]] = %f\n",p[index[ri]]);
-      //printf("before p[index[rj]] = %f\n",p[index[rj]]);
-
-      /*
-      tmp1 = runif(1);
-      tmp2 = runif(1);
-      printf("%f, %f\n", tmp1[0], tmp2[0]);
-      */
 			if(0.5<p[index[ri]]){
 				p[index[ri]]=1;
 			}else{
@@ -94,10 +85,7 @@ NumericVector lpm2(NumericVector prob, NumericMatrix x){
 			}else{
 				p[index[rj]]=0;
 			}
-       
       
-      //printf("after p[index[ri]] = %f\n",p[index[ri]]);
-      //printf("after p[index[rj]] = %f\n",p[index[rj]]);
 		}	
 		move = rj;
 		if( p[index[ri]]==0 || p[index[ri]]==1 ){

@@ -13,3 +13,4 @@ Encoding: UTF-8
 URL: http://www.antongrafstrom.se/balancedsampling
 NeedsCompilation: yes
 Packaged: 2016-01-27 14:18:39 UTC; Anton
+RoxygenNote: 6.0.1

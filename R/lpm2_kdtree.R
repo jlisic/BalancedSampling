@@ -6,7 +6,8 @@ lpm2_kdtree <- function(
   maxCheck=4,
   termDist=.1,
   inOrder=FALSE,
-  resample=1
+  resample=1,
+  probTree=FALSE
 ) {
 
   if(!is.matrix(x)) x <- as.matrix(x)
@@ -31,7 +32,7 @@ lpm2_kdtree <- function(
   }
 
   if(inOrder) { 
-    recordOrder = rep(-1,n); 
+    recordOrder = rep(-1,n*resample); 
   } else {
     recordOrder = -2
   }
@@ -50,16 +51,36 @@ lpm2_kdtree <- function(
                  as.integer( maxCheck ),            # number of leaves to check
                  as.double( termDist ),             # terminal distance 
                  as.integer(rep(recordOrder,resample)),           # in order vector
-                 as.integer(resample)              # number of samples to re-draw
+                 as.integer(resample),             # number of samples to re-draw
+                 as.integer(probTree)
   )
 
   r.result <<- r.result
+      
+  sample_size <- round(sum(prob)) 
 
   if(inOrder) {
-    selected <- r.result[[9]] != -1
-    return(which(selected)[r.result[[9]][selected]])
+    if(resample == 1) {
+      selected <- r.result[[9]] != -1
+      r.result <- which(selected)[r.result[[9]][selected]]
+    } else {
+      selected <- r.result[[9]] != -1
+      r.result <- which(selected)[r.result[[9]][selected]]
+      r.result <- matrix( r.result ,nrow=sample_size) 
+      r.result <- r.result %%n
+      r.result[r.result == 0 ] <-n 
+    }
+    return( r.result )
   } else {
-    return( which( r.result[[2]] > .5 ) )
+
+    if(resample == 1) {
+      r.result <- which( r.result[[2]] > .5 )
+    } else {
+      r.result <- matrix( which( r.result[[2]] > .5 ),nrow=sample_size) 
+      r.result <- r.result %%n
+      r.result[r.result == 0 ] <-n 
+    }
+    return( r.result ) 
   }
 }
 

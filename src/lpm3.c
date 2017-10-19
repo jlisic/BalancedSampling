@@ -1,5 +1,5 @@
-/* Copyright (c) 2015  Jonathan Lisic 
- * Last edit: 15/07/08 - 11:45:28
+/* Copyright (c) 2015-2017 Jonathan Lisic 
+ * Last edit: 17/10/19 - 10:57:03 
  * License: GPL (>=2) 
  */  
 
@@ -74,12 +74,14 @@ void R_lpm3(
     int * maxCountPtr,
     double * termDist,
     int * recordOrder, 
-    int * drawsPtr /* resampling count */
+    int * drawsPtr, /* resampling count */
+    int * useProbPtr
   ) {
 
   size_t n = (size_t) * nPtr;
   size_t m = (size_t) * mPtr;
   size_t K = (size_t) * KPtr;
+  size_t useProb = (size_t) * useProbPtr;
   size_t draws = (size_t) * drawsPtr;
   size_t maxCount = (size_t) * maxCountPtr;
   size_t i,j,k,l;
@@ -125,8 +127,12 @@ void R_lpm3(
    x - data  
   */
   rootNodePtr myTree = createTree( K, m, n, x);
- 
-  myTree->root = buildIndex( myTree, 0, n, treeIndex ); 
+
+  if( useProb) { 
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, pi ); 
+  } else {
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, NULL ); 
+  }
   /***************************** CREATE TREE *****************************/
 
   /* save a copy of the tree index */
@@ -147,6 +153,10 @@ void R_lpm3(
       /* need to make this more memory efficient */
       pi = pi + n;
 
+      if(recordOrder[0] != -2) {
+        recordOrder = recordOrder + n;
+      }
+
       for( i=0; i< n; i++) {
         indexMap[i]=i;
         reverseIndexMap[i]=i;
@@ -157,12 +167,10 @@ void R_lpm3(
     /* generate values ahead of time to be like lpm2 */ 
     for( i = 0; i < n; i++) {
       r1[i] = runif(0.0,1.0);
-      //printf("r1[%d] = %f\n", (int) i, r1[i]);
     }
   
     for( i = 0; i < n; i++) {
       r2[i] = runif(0.0,1.0);
-      //printf("r2[%d] = %f\n", (int) i, r1[i]);
     }
   
   

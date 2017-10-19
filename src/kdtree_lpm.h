@@ -63,7 +63,9 @@ nodePtr buildIndex(
     rootNodePtr r,    // root node pointer
     size_t dim,       // dim to base next node on
     size_t m,         // size of index
-    size_t * indexPtr // index array to add to new node
+    size_t * indexPtr,// index array to add to new node
+    int useProb,        // determine if we use probability to build an index
+    double * prob
   ); 
 
 // create Node 
@@ -71,6 +73,20 @@ nodePtr createNode( rootNodePtr r );
 
 // delete a node and all of it's children 
 void deleteNode( rootNodePtr r, nodePtr c ); 
+
+// split and create children
+double splitDataProb( 
+    double * y,
+    size_t * index, 
+    size_t ** indexLeft,
+    size_t ** indexRight,
+    size_t * indexLeftSize,
+    size_t * indexRighSize,
+    size_t n, 
+    size_t p,
+    size_t dim,
+    double * prob 
+    ); 
 
 // split and create children
 double splitData( 
@@ -83,6 +99,20 @@ double splitData(
     size_t n, 
     size_t p,
     size_t dim 
+    ); 
+
+// split and create children by prob
+double splitDataProb( 
+    double * y,
+    size_t * index, 
+    size_t ** indexLeft,
+    size_t ** indexRight,
+    size_t * indexLeftSize,
+    size_t * indexRighSize,
+    size_t n, 
+    size_t p,
+    size_t dim,
+    double * prob 
     ); 
 
 // function to get the closest neighbor, with tie handling 
@@ -127,5 +157,10 @@ size_t find_nn_notMe_dist(
     double * tieBreak,
     double * termDist  
     ); 
+
+int compDblPtr ( 
+    const void * aPtr, 
+    const void * bPtr 
+  );
 
 #endif

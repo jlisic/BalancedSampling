@@ -64,7 +64,9 @@ nodePtr buildIndex(
     rootNodePtr r,      // root pointer 
     size_t dim,         // current dim
     size_t m,           // current length of obs
-    size_t * indexPtr   // pointer to obs indexes 
+    size_t * indexPtr,  // pointer to obs indexes 
+    int useProb,        // determine if we use probability to build an index
+    double * prob
   ) {
  
   size_t i,K; 
@@ -72,6 +74,7 @@ nodePtr buildIndex(
   size_t * indexRightPtr = NULL;
   size_t indexLeftSize;
   size_t indexRightSize;
+  double probSum = 0;
 
   nodePtr c = createNode(r);
   // record to the tree structure the new tree 
@@ -82,38 +85,66 @@ nodePtr buildIndex(
   K = r->K;
    
   // do we have too many points? 
-  if( m <= r->leafSize ) {
-
-    // save the final pointer locations 
-    for( i = 0; i < m; i++) 
+  if(!useProb) {
+    if( m <= r->leafSize ) {
+  
+      // save the final pointer locations 
+      for( i = 0; i < m; i++) 
+        // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
+        r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
+  
+      return c;
+    }
+  } else {
+  // if using probSize we want to figure out how many samples per psu
+    for( i = 0; i < m; i++) {
+      probSum += prob[i];
       // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
-      r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
-
-    return c;
+      if(probSum > r->leafSize) {
+        r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
+        return c;
+      }
+    } 
   } 
 
   // if we are here we have too many points 
   // create children
   // figure out our new dim
   // split data and give to children 
-  c-> split = splitData( 
-    r->data,
-    c->index, 
-    &indexLeftPtr,
-    &indexRightPtr,
-    &indexLeftSize,
-    &indexRightSize,
-    m, 
-    K,
-    dim  
-    ); 
+
+  if( useProb ) { 
+    c-> split = splitDataProb( 
+      r->data,
+      c->index, 
+      &indexLeftPtr,
+      &indexRightPtr,
+      &indexLeftSize,
+      &indexRightSize,
+      m, 
+      K,
+      dim,
+      prob 
+      ); 
+  } else {
+    c-> split = splitData( 
+      r->data,
+      c->index, 
+      &indexLeftPtr,
+      &indexRightPtr,
+      &indexLeftSize,
+      &indexRightSize,
+      m, 
+      K,
+      dim  
+      ); 
+  }
 
   free(c->index);
   c->index = NULL; 
 
   // move current contents to new children
-  c->left  = buildIndex( r, (dim+1) % K, indexLeftSize , indexLeftPtr);
-  c->right = buildIndex( r, (dim+1) % K, indexRightSize, indexRightPtr);
+  c->left  = buildIndex( r, (dim+1) % K, indexLeftSize , indexLeftPtr,  useProb, prob);
+  c->right = buildIndex( r, (dim+1) % K, indexRightSize, indexRightPtr, useProb, prob);
 
   return c;
 }
@@ -164,6 +195,84 @@ void deleteNode( rootNodePtr r, nodePtr c ) {
 }
 
 
+int compDblPtr ( const void * aPtr, const void * bPtr ) {
+   double a = **(double **) aPtr;
+   double b = **(double **) bPtr;
+   if (a < b) return -1;
+   if (a > b) return  1;
+   return 0;
+}
+
+
+
+// split and create children using prob weighted median
+double splitDataProb( 
+    double * y,
+    size_t * index, 
+    size_t ** indexLeft,
+    size_t ** indexRight,
+    size_t * indexLeftSize,
+    size_t * indexRightSize,
+    size_t n, 
+    size_t p,
+    size_t dim,
+    double * prob
+    ) {
+
+  double split;
+  double prob_sum,pi;
+  size_t splitIndex,i;
+
+  // get the median 
+  double * x =  calloc( n, sizeof(double) );        //allocate some temporary space for finding the median
+  double ** xPtr =  calloc( n, sizeof( double * ) ); //allocate some temporary space for finding the median
+  
+  // create input for qsort
+  for( i = 0; i < n; i++) {
+    x[i] = y[ index[i] * p + dim];
+    xPtr[i] = &(x[i]);
+  }
+  
+  // use quick sort to find the median 
+  // get split
+  splitIndex = n/2;
+
+  // do qsort 
+  qsort( xPtr, n, sizeof( double * ), compDblPtr);
+
+  // calculate split point for prob_sum
+  prob_sum = 0;
+  for( i = 0; i < n ; i++) prob_sum += prob[i]; 
+  pi = prob_sum / 2.0;
+
+  *indexLeftSize = 0;
+  prob_sum = 0;
+  for( i = 0; i < n ; i++) {
+    if( prob_sum >= pi ) break;  
+    *indexLeftSize = *indexLeftSize + 1; 
+    prob_sum += prob[xPtr[i]-x];
+  }
+
+  split=*xPtr[i-1];
+      
+  *indexRightSize = n - *indexLeftSize; 
+
+  if( *indexLeftSize > 0 )
+    *indexLeft  = calloc(*indexLeftSize , sizeof(size_t) );
+  if( *indexRightSize > 0 )
+    *indexRight = calloc(*indexRightSize , sizeof(size_t) );
+    
+  // now let's have some fun with pointer math 
+  for( i = 0; i < *indexLeftSize ; i++) (*indexLeft)[i]  = index[xPtr[i] - x];
+  for( i = 0; i < *indexRightSize; i++) (*indexRight)[i] = index[xPtr[*indexLeftSize + i] - x];
+  
+  free(xPtr);
+  free(x); 
+
+  return split;
+}
+
+
 
 
 // split and create children
@@ -194,7 +303,8 @@ double splitData(
   // use quick sort to find the median 
   // get split
   splitIndex = n/2;
-  
+
+  // return split value
   split = quantile_quickSelectIndex( xPtr, splitIndex, n ); 
     
   *indexLeftSize  = n / 2;
@@ -541,7 +651,9 @@ int main () {
     myTree,      // root pointer 
     0,           // current dim
     nrow,        // current length of obs
-    index        // pointer to obs indexes 
+    index,       // pointer to obs indexes 
+    0,
+    NULL
   ); 
 
   printTree( myTree, myTree->root );

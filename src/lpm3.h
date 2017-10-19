@@ -1,5 +1,5 @@
-/* Copyright (c) 2015-2017  Jonathan Lisic 
- * Last edit: 17/09/26 - 20:41:27  
+/* Copyright (c) 2015-2017 Jonathan Lisic 
+ * Last edit: 17/10/19 - 10:57:03 
  * License: GPL (>=2) 
  */  
 
@@ -46,7 +46,8 @@ void R_lpm3(
     int * maxCountPtr,
     double * termDist,
     int * recordOrder, 
-    int * drawsPtr /* resampling count */
+    int * drawsPtr, /* resampling count */
+    int * useProbPtr
   );
 
 

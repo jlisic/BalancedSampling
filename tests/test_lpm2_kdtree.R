@@ -1,5 +1,7 @@
 library(BalancedSampling)
 
+if( F ) {
+set.seed(100)
 N <- 1000
 n <- 10
 x <- cbind( runif(N), runif(N))
@@ -40,11 +42,23 @@ print(proc.time() - Cprog)
 
 
 
-
-
 print(sum( sampled_kdtree != resample) /n)
+}
 
+# run a prob tree
 
+set.seed(100)
+N <- 10
+n <- 4 
+#x <- cbind( runif(N), runif(N))
+x <- runif(N)
+m <- 2 
 
+print(x)
 
+set.seed(100)
+Cprog <- proc.time()
+resample <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=TRUE) 
+print("lpm2_kdtree running time")
+print(proc.time() - Cprog)
 

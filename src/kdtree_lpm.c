@@ -97,14 +97,19 @@ nodePtr buildIndex(
     }
   } else {
   // if using probSize we want to figure out how many samples per psu
+  printf("prob split\n");
     for( i = 0; i < m; i++) {
       probSum += prob[i];
       // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
-      if(probSum > r->leafSize) {
-        r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
-        return c;
-      }
     } 
+    printf("probSum = %f r->leafSize = %d\n", probSum, (int) r->leafSize);
+    if(probSum <= r->leafSize) {
+      printf("don't split!\n");
+      for( i = 0; i < m; i++) 
+        r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
+      return c;
+    }
+    printf("split!\n");
   } 
 
   // if we are here we have too many points 
@@ -113,7 +118,7 @@ nodePtr buildIndex(
   // split data and give to children 
 
   if( useProb ) { 
-    c-> split = splitDataProb( 
+    c->split = splitDataProb( 
       r->data,
       c->index, 
       &indexLeftPtr,
@@ -125,6 +130,12 @@ nodePtr buildIndex(
       dim,
       prob 
       ); 
+    printf("Left Side Size = %d, Right Side Size = %d split = %f\n", (int) indexLeftSize, (int) indexRightSize, c->split);
+    printf("Left\n:");
+    for(i=0; i < indexLeftSize; i++) printf("%d ", (int) indexLeftPtr[i]);
+    printf("\nRight\n:");
+    for(i=0; i < indexRightSize; i++) printf("%d ", (int) indexRightPtr[i]);
+    printf("\n");
   } else {
     c-> split = splitData( 
       r->data,

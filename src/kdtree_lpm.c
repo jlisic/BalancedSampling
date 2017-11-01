@@ -97,19 +97,27 @@ nodePtr buildIndex(
     }
   } else {
   // if using probSize we want to figure out how many samples per psu
-  printf("prob split\n");
+#ifdef DEBUG_PROB  
+    printf("prob split\n");
+#endif
     for( i = 0; i < m; i++) {
-      probSum += prob[i];
+      probSum += prob[ indexPtr[i] ];
       // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
     } 
+#ifdef DEBUG_PROB  
     printf("probSum = %f r->leafSize = %d\n", probSum, (int) r->leafSize);
+#endif
     if(probSum <= r->leafSize) {
+#ifdef DEBUG_PROB  
       printf("don't split!\n");
+#endif
       for( i = 0; i < m; i++) 
         r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
       return c;
     }
+#ifdef DEBUG_PROB  
     printf("split!\n");
+#endif
   } 
 
   // if we are here we have too many points 
@@ -130,12 +138,14 @@ nodePtr buildIndex(
       dim,
       prob 
       ); 
+#ifdef DEBUG_PROB  
     printf("Left Side Size = %d, Right Side Size = %d split = %f\n", (int) indexLeftSize, (int) indexRightSize, c->split);
     printf("Left\n:");
     for(i=0; i < indexLeftSize; i++) printf("%d ", (int) indexLeftPtr[i]);
     printf("\nRight\n:");
     for(i=0; i < indexRightSize; i++) printf("%d ", (int) indexRightPtr[i]);
     printf("\n");
+#endif
   } else {
     c-> split = splitData( 
       r->data,
@@ -674,7 +684,7 @@ int main () {
     dist = INFINITY;
     tieBreak = -1;
     j = find_nn_notMe(myTree, myTree->root, i, queryPoint, &dist, &tieBreak );  
-    printf("%zu: %zu %f\n", i, j, dist );
+//    printf("%zu: %zu %f\n", i, j, dist );
   }
 
   deleteTree( myTree );

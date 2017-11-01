@@ -47,18 +47,40 @@ print(sum( sampled_kdtree != resample) /n)
 
 # run a prob tree
 
+if( F ) {
 set.seed(100)
 N <- 10
 n <- 4 
-#x <- cbind( runif(N), runif(N))
-x <- runif(N)
+x <- cbind( runif(N), runif(N))
+#x <- runif(N)
 m <- 2 
 
 print(x)
 
 set.seed(100)
 Cprog <- proc.time()
-resample <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=TRUE) 
+resample <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=FALSE) 
 print("lpm2_kdtree running time")
 print(proc.time() - Cprog)
+
+set.seed(100)
+Cprog <- proc.time()
+resample_prob <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=TRUE) 
+print("lpm2_kdtree running time")
+print(proc.time() - Cprog)
+
+}
+
+x    <- c( 0.1, 0.3, 0.4, 0.7, 0.9, 1.2 )
+prob <- c( 1/6, 1/6, 2/6, 2/6, 3/6, 3/6 ) 
+set.seed(100)
+resample_prob <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=TRUE) 
+
+
+
+
+
+
+
+
 

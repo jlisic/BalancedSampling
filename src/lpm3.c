@@ -130,14 +130,14 @@ void R_lpm3(
   */
   rootNodePtr myTree = createTree( K, m, n, x);
       
-  printf("1. building index...");
+//  printf("1. building index...");
   if( useProb) { 
     myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, pi ); 
   } else {
     myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, NULL ); 
   }
-  printf(" done.\n");
-      printf("\nTree Index\n");
+//  printf(" done.\n");
+//      printf("\nTree Index\n");
       for( t = 0; t <n; t++) printf("%d ", (int) *(myTree->pointerIndex[t]));  
   /***************************** CREATE TREE *****************************/
 
@@ -196,7 +196,7 @@ void R_lpm3(
       tieBreak = -1;
   
   
-      printf("2. searching...");
+//      printf("2. searching...");
       /* algorithm 1 is a count bounded kdtree */
       if( *algorithmPtr == 1 ) {
         count = 0;
@@ -232,7 +232,7 @@ void R_lpm3(
             &tieBreak
             ); 
       }
-      printf(" done\n"); 
+//      printf(" done\n"); 
   
   
     
@@ -242,7 +242,7 @@ void R_lpm3(
         break;
       }
  
-      printf("update prob..."); 
+//      printf("update prob..."); 
   
       updateProb( 
          &( pi[j] ), 
@@ -250,7 +250,7 @@ void R_lpm3(
          r2[i]
          ); 
       
-      printf(" done\n"); 
+/*      printf(" done\n"); 
   
       printf("i = %d, j = %d", (int) i, (int) j);
       printf("\nTree Index\n");
@@ -262,6 +262,7 @@ void R_lpm3(
       printf("\n");
       
       printf("reverse mapping..."); 
+*/
       /* handle reverse mapping etc... */
       /* move is from the reverse mapping since we don't really know the index of k */
       /* it also is a bit more readable for j instead of grabbing sampled again */
@@ -272,9 +273,9 @@ void R_lpm3(
         updateMapping(k,i,indexMap,reverseIndexMap);
         *(myTree->pointerIndex[k]) = n;  // ensure we can't find it again 
       }
-      printf(" done\n"); 
+//      printf(" done\n"); 
         
-      printf("record order..."); 
+//      printf("record order..."); 
       // record in order
       if(recordOrder[0] != -2) {
         if( recordOrder[j] == -1 ) {
@@ -290,7 +291,7 @@ void R_lpm3(
           }
         } 
       }
-      printf(" done\n"); 
+//      printf(" done\n"); 
   
   
     } 
@@ -299,7 +300,7 @@ void R_lpm3(
   }
   /***************************** RUN RESAMPLE ***************************/
  
- printf("clean up..."); 
+// printf("clean up..."); 
 
   /* delete tree */
   deleteTree(myTree);
@@ -314,7 +315,7 @@ void R_lpm3(
   
   PutRNGstate();
 
-  printf("done.\n");
+//  printf("done.\n");
   return;
 }
 

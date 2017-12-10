@@ -36,6 +36,7 @@ struct rootNode {
   size_t n;                 /* number of rows in x */ 
   size_t ** pointerIndex;   /* pointer index to allow easy changing of returned values */
   double * data;            /* pointer to x */
+  size_t * nodeIndex;            /* pointer to node assignment */
   nodePtr root;             /* root node pointer */
 };
 
@@ -46,6 +47,12 @@ typedef struct rootNode * rootNodePtr;
 
 /* function to print a tree */
 void printTree( rootNodePtr r, nodePtr c ); 
+
+/* function to identify bounds of the tree */
+void printTree2( rootNodePtr r, nodePtr c, double * splitPointLower, double * splitPointUpper ); 
+
+/* save bound */
+void recordBounds( rootNodePtr r, nodePtr c, double * splitPointLower, double * splitPointUpper, double * bound ); 
 
 /* function to create a new Tree */
 rootNodePtr createTree( 
@@ -65,7 +72,8 @@ nodePtr buildIndex(
     size_t m,         // size of index
     size_t * indexPtr,// index array to add to new node
     int useProb,        // determine if we use probability to build an index
-    double * prob
+    double * prob,
+    size_t * nodeIdentity
   ); 
 
 // create Node 

@@ -22,7 +22,9 @@ Local Pivotal Method
      termDist = 0.1,
      inOrder = FALSE,
      resample = 1,
-     probTree = FALSE
+     probTree = FALSE,
+     returnTree = FALSE,
+     returnBounds = FALSE
      ) 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -70,6 +72,14 @@ Local Pivotal Method
     A boolean value, \code{TRUE} will split the k-d tree based on the weighted
     median, using the values in \code{prob}. 
   }
+  \item{returnTree}{
+    A boolean value, \code{TRUE} will return the node assigment.  This assignment
+    will be appended to a returned list.. 
+  }
+  \item{returnBounds}{
+    A boolean value, \code{TRUE} will return the bounds for each node assigment.  
+    These bounds will be appended to a returned list. 
+  }
 }
 \value{ 
 A vector of selected indexes from the matrix x. If using default values for \code{inOrder}, 
@@ -77,6 +87,8 @@ A vector of selected indexes from the matrix x. If using default values for \cod
 ties exist in the distance function exist.  \code{inOrder=TRUE} will return results in order 
 of selection, and \code{resample > 1} will return a matrix with each set of samples returned
 as a column vector.  
+
+A list is returned includiing this vector if returnTree or returnBounds is set to TRUE.
 }
 \references{
 Lisic, J., Jonathan (2015)  Parcel Level Agricultural Land Cover Prediction. 

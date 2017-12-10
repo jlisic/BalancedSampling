@@ -47,7 +47,9 @@ void R_lpm3(
     double * termDist,
     int * recordOrder, 
     int * drawsPtr, /* resampling count */
-    int * useProbPtr
+    int * useProbPtr,
+    int * nodeAssignment,
+    double * bound 
   );
 
 

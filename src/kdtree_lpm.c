@@ -29,6 +29,7 @@ rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data ) {
   rootNodePtr y = malloc( sizeof( rootNode ) );
   
   y->pointerIndex = calloc( n, sizeof( size_t * ) );
+  y->nodeIndex = calloc( n, sizeof( size_t * ) );
 
   // setup root node 
   y->K = K;
@@ -47,6 +48,7 @@ rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data ) {
 void deleteTree( rootNodePtr r ) {
  
   if(r->pointerIndex != NULL) free( r->pointerIndex ); 
+  if(r->nodeIndex != NULL) free( r->nodeIndex ); 
   r->pointerIndex = NULL;
   r->data = NULL;
     
@@ -66,7 +68,8 @@ nodePtr buildIndex(
     size_t m,           // current length of obs
     size_t * indexPtr,  // pointer to obs indexes 
     int useProb,        // determine if we use probability to build an index
-    double * prob
+    double * prob,
+    size_t * nodeIdentity
   ) {
  
   size_t i,K; 
@@ -77,6 +80,7 @@ nodePtr buildIndex(
   double probSum = 0;
 
   nodePtr c = createNode(r);
+
   // record to the tree structure the new tree 
   c->indexUsed = m;
   c->index = indexPtr;
@@ -89,30 +93,28 @@ nodePtr buildIndex(
     if( m <= r->leafSize ) {
   
       // save the final pointer locations 
-      for( i = 0; i < m; i++) 
+      for( i = 0; i < m; i++) { 
         // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
         r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
-  
+        r->nodeIndex[ indexPtr[i] ] = *nodeIdentity;
+//        printf(" node assignment %d is %d\n", (int) indexPtr[i], (int) *nodeIdentity );
+      }
+      *nodeIdentity = *nodeIdentity + 1;
       return c;
     }
   } else {
   // if using probSize we want to figure out how many samples per psu
-#ifdef DEBUG_PROB  
-    printf("prob split\n");
-#endif
     for( i = 0; i < m; i++) {
       probSum += prob[ indexPtr[i] ];
       // go through each element of indexPtr and store a pointer to that indexPtr element in pointerIndex
     } 
-#ifdef DEBUG_PROB  
-    printf("probSum = %f r->leafSize = %d\n", probSum, (int) r->leafSize);
-#endif
     if(probSum <= r->leafSize) {
-#ifdef DEBUG_PROB  
-      printf("don't split!\n");
-#endif
-      for( i = 0; i < m; i++) 
+      for( i = 0; i < m; i++) { 
         r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
+        r->nodeIndex[ indexPtr[i] ] = *nodeIdentity;
+//        printf(" node assignment %d is %d\n", (int) indexPtr[i], (int) *nodeIdentity );
+      }
+      *nodeIdentity = *nodeIdentity + 1;
       return c;
     }
 #ifdef DEBUG_PROB  
@@ -164,8 +166,8 @@ nodePtr buildIndex(
   c->index = NULL; 
 
   // move current contents to new children
-  c->left  = buildIndex( r, (dim+1) % K, indexLeftSize , indexLeftPtr,  useProb, prob);
-  c->right = buildIndex( r, (dim+1) % K, indexRightSize, indexRightPtr, useProb, prob);
+  c->left  = buildIndex( r, (dim+1) % K, indexLeftSize , indexLeftPtr,  useProb, prob, nodeIdentity);
+  c->right = buildIndex( r, (dim+1) % K, indexRightSize, indexRightPtr, useProb, prob, nodeIdentity);
 
   return c;
 }
@@ -371,6 +373,80 @@ void printTree( rootNodePtr r, nodePtr c ) {
 
 }
 
+
+
+// a function to print the tree 
+void printTree2( rootNodePtr r, nodePtr c, double * splitPointLower, double * splitPointUpper ) {
+
+  size_t i;
+  double upper_temp;
+  double lower_temp;
+
+  if( !c->left  & !c->right) {
+    PRINTF("node: %d\n", (int) r->nodeIndex[c->index[0]] );
+    if( c->index != NULL) 
+      for( i=0; i < r->K; i++) PRINTF("%d: %f, %f\n",(int) i , splitPointLower[i], splitPointUpper[i]); 
+    PRINTF("\n");
+    return;
+  }
+
+  if( c->left ) {
+    upper_temp = splitPointUpper[c->dim];
+
+    splitPointUpper[c->dim] = c->split;
+    printTree2( r, c->left, splitPointLower, splitPointUpper);
+
+    splitPointUpper[c->dim] = upper_temp;
+  }
+  
+  if( c->right ) {
+    lower_temp = splitPointLower[c->dim];
+
+    splitPointLower[c->dim] = c->split;
+    printTree2( r, c->right, splitPointLower, splitPointUpper);
+    
+    splitPointLower[c->dim] = lower_temp;
+  }
+  
+  return;
+}
+
+
+
+// a function to write the tree 
+void recordBounds( rootNodePtr r, nodePtr c, double * splitPointLower, double * splitPointUpper, double * bound ) {
+
+  size_t i,row;
+  double upper_temp;
+  double lower_temp;
+
+  if( !c->left  & !c->right) {
+    if( c->index != NULL) {
+      row = r->nodeIndex[c->index[0]]; 
+      for( i=0; i < r->K; i++) { 
+        bound[row * 2 * r->K + i] = splitPointLower[i];
+        bound[row * 2 * r->K + r->K + i] = splitPointUpper[i];
+      } 
+      return;
+    }
+  }
+
+  if( c->left ) {
+    upper_temp = splitPointUpper[c->dim];
+    splitPointUpper[c->dim] = c->split;
+    recordBounds( r, c->left, splitPointLower, splitPointUpper, bound);
+    splitPointUpper[c->dim] = upper_temp;
+  }
+  
+  if( c->right ) {
+    lower_temp = splitPointLower[c->dim];
+    splitPointLower[c->dim] = c->split;
+    recordBounds( r, c->right, splitPointLower, splitPointUpper, bound);
+    splitPointLower[c->dim] = lower_temp;
+  }
+  
+  return;
+}
 
 
 
@@ -659,6 +735,7 @@ int main () {
   double * queryPoint;
   double dist;
   double tieBreak;
+  size_t nodeIdentity = 0;
 
   rootNodePtr myTree = NULL;
 
@@ -674,7 +751,8 @@ int main () {
     nrow,        // current length of obs
     index,       // pointer to obs indexes 
     0,
-    NULL
+    NULL,
+    &nodeIdentity;
   ); 
 
   printTree( myTree, myTree->root );

@@ -7,7 +7,9 @@ lpm2_kdtree <- function(
   termDist=.1,
   inOrder=FALSE,
   resample=1,
-  probTree=FALSE
+  probTree=FALSE,
+  returnTree=FALSE,
+  returnBounds=FALSE
 ) {
 
   if(!is.matrix(x)) x <- as.matrix(x)
@@ -37,6 +39,13 @@ lpm2_kdtree <- function(
     recordOrder = -2
   }
 
+  # record leaf node bounds
+  if( returnBounds ) {
+    bounds = rep(-1, n * K ) 
+  } else {
+    bounds = -2 
+  }
+
   # sanity check to avoid segfaults in R_lpm3 
   if( length(prob) != n ) stop(print("Length of probability vector does not match the number of rows in x."))
   
@@ -51,11 +60,14 @@ lpm2_kdtree <- function(
                  as.integer( maxCheck ),            # number of leaves to check
                  as.double( termDist ),             # terminal distance 
                  as.integer(rep(recordOrder,resample)),           # in order vector
-                 as.integer(resample),             # number of samples to re-draw
-                 as.integer(probTree)
+                 as.integer(resample),              # number of samples to re-draw
+                 as.integer(probTree),
+                 as.integer( rep(0,n) ),            # node assignment 
+                 as.double( bounds )
   )
 
-  r.result <<- r.result
+  node_index <- r.result[[12]]
+  bounds <- r.result[[13]]
       
   sample_size <- round(sum(prob)) 
 
@@ -70,7 +82,7 @@ lpm2_kdtree <- function(
       r.result <- r.result %%n
       r.result[r.result == 0 ] <-n 
     }
-    return( r.result )
+    
   } else {
 
     if(resample == 1) {
@@ -80,8 +92,18 @@ lpm2_kdtree <- function(
       r.result <- r.result %%n
       r.result[r.result == 0 ] <-n 
     }
-    return( r.result ) 
   }
+    
+  if( returnTree ) r.result <- list( sample=r.result, nodes=node_index ) 
+  if( returnBounds ) {
+    bounds <- bounds[ bounds != -1]
+    bounds <- matrix(bounds,ncol=2*K,byrow=TRUE)
+    colnames(bounds) <- c( sprintf("lower_%d",1:K), sprintf("upper_%d",1:K))
+
+    r.result <- append(r.result, list(bounds=bounds )) 
+  }
+    
+  return( r.result ) 
 }
 
 

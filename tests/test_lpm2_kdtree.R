@@ -70,11 +70,31 @@ print("lpm2_kdtree running time")
 print(proc.time() - Cprog)
 
 }
+N <- 100
+n <- 10
+m <- 10
+x <- cbind( runif(N), runif(N))
 
-x    <- c( 0.1, 0.3, 0.4, 0.7, 0.9, 1.2 )
-prob <- c( 1/6, 1/6, 2/6, 2/6, 3/6, 3/6 ) 
+#x    <- c( 0.1, 0.3, 0.4, 0.7, 0.9, 1.2 )
+#prob <- c( 1/6, 1/6, 2/6, 2/6, 3/6, 3/6 ) 
 set.seed(100)
-resample_prob <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=TRUE) 
+
+resample_prob <-  lpm2_kdtree( rep(n/N,N), x, m=m, probTree=FALSE, returnTree=TRUE,returnBounds=TRUE) 
+
+a <- resample_prob$bounds 
+a[ a[,1] == -Inf,1] <- min(x[,1])
+a[ a[,2] == -Inf,2] <- min(x[,2])
+a[ a[,3] == Inf,3] <- max(x[,1])
+a[ a[,4] == Inf,4] <- max(x[,2])
+
+plot(x, col=resample_prob$nodes + 1)
+for( i in 1:NROW(a) ) { 
+  lines(x= a[i,c(1,1)], y=a[i,c(2,4)] )
+  lines(x= a[i,c(3,3)], y=a[i,c(2,4)] )
+  lines(x= a[i,c(1,3)], y=a[i,c(2,2)] )
+  lines(x= a[i,c(1,3)], y=a[i,c(4,4)] )
+}
+
 
 
 

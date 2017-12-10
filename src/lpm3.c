@@ -75,7 +75,9 @@ void R_lpm3(
     double * termDist,
     int * recordOrder, 
     int * drawsPtr, /* resampling count */
-    int * useProbPtr
+    int * useProbPtr,
+    int * nodeAssignment, /* node assignment */
+    double * bounds
   ) {
 
   size_t n = (size_t) * nPtr;
@@ -100,6 +102,11 @@ void R_lpm3(
   size_t count;
 
   size_t * backupTreeIndex = NULL;
+
+  size_t nodeIdentity = 0; // the initial nodeIdentity;
+  
+  double lower_bound[2] = { -INFINITY, -INFINITY };
+  double upper_bound[2] = { INFINITY, INFINITY };
 
 
   /***************************** CREATE RANDOM ***************************/
@@ -130,15 +137,23 @@ void R_lpm3(
   */
   rootNodePtr myTree = createTree( K, m, n, x);
       
+
 //  printf("1. building index...");
   if( useProb) { 
-    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, pi ); 
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, pi, &nodeIdentity ); 
   } else {
-    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, NULL ); 
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, NULL, &nodeIdentity ); 
   }
+  for( t = 0; t <n; t++) nodeAssignment[t] = (int) myTree->nodeIndex[t];  
+
+  if( bounds[0] != -2 ) {
+//    printTree2( myTree, myTree->root, lower_bound, upper_bound ); 
+    recordBounds( myTree, myTree->root, lower_bound, upper_bound, bounds ); 
+  } 
+
 //  printf(" done.\n");
 //      printf("\nTree Index\n");
-      for( t = 0; t <n; t++) printf("%d ", (int) *(myTree->pointerIndex[t]));  
+  //for( t = 0; t <n; t++) printf("%d ", (int) *(myTree->pointerIndex[t]));  
   /***************************** CREATE TREE *****************************/
 
   /* save a copy of the tree index */

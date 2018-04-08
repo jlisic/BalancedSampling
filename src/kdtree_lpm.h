@@ -133,7 +133,14 @@ size_t getClosestTie(
     double * tieBreak // tie 
     ); 
 
-// funciton to find neighbors 
+// function to find neighbors 
+void nn_sample( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t * sample 
+    ); 
+
+// function to find neighbors 
 size_t find_nn_notMe( 
     rootNodePtr r, 
     nodePtr c, 
@@ -143,7 +150,7 @@ size_t find_nn_notMe(
     double * tieBreak  
     ); 
 
-// funciton to find neighbors fixed count
+// function to find neighbors fixed count
 size_t find_nn_notMe_count( 
     rootNodePtr r, 
     nodePtr c, 
@@ -155,7 +162,7 @@ size_t find_nn_notMe_count(
     size_t * maxCount
     ); 
 
-// funciton to find neighbors with min dist 
+// function to find neighbors with min dist 
 size_t find_nn_notMe_dist( 
     rootNodePtr r, 
     nodePtr c, 

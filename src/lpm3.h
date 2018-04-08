@@ -53,5 +53,23 @@ void R_lpm3(
   );
 
 
+/* the R interface */
+void R_lpm4(
+    double * x,
+    double * pi,
+    int * nPtr,
+    int * KPtr, 
+    int * mPtr,
+    int * algorithmPtr,
+    int * maxCountPtr,
+    double * termDist,
+    int * recordOrder, 
+    int * drawsPtr, /* resampling count */
+    int * useProbPtr,
+    int * nodeAssignment,
+    double * bound 
+  );
+
+
 
 #endif

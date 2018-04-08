@@ -338,3 +338,253 @@ void R_lpm3(
 
 
 
+/********************************************************/
+/* Approximate Algorithm: kd tree strat SRS             */
+/********************************************************/
+
+/* the R interface */
+void R_lpm4(
+    double * x,
+    double * pi,
+    int * nPtr,
+    int * KPtr, 
+    int * mPtr,
+    int * algorithmPtr,
+    int * maxCountPtr,
+    double * termDist,
+    int * recordOrder, 
+    int * drawsPtr, /* resampling count */
+    int * useProbPtr,
+    int * nodeAssignment, /* node assignment */
+    double * bounds
+  ) {
+
+  size_t n = (size_t) * nPtr;
+  size_t m = (size_t) * mPtr;
+  size_t K = (size_t) * KPtr;
+  size_t useProb = (size_t) * useProbPtr;
+  size_t draws = (size_t) * drawsPtr;
+  size_t maxCount = (size_t) * maxCountPtr;
+  size_t i,j,k,l;
+  double tieBreak; /* used to break ties */
+
+  size_t * k_array_Ptr = NULL; /* what we return from the k-d tree */
+  size_t my_index;
+
+  size_t t;
+
+  GetRNGstate();
+
+  size_t order=1;  // record in order
+  size_t sampled;
+  double dist;
+  double * r1;
+  double * r2;
+
+  size_t count;
+
+  size_t * backupTreeIndex = NULL;
+
+  size_t nodeIdentity = 0; // the initial nodeIdentity;
+  
+  double lower_bound[2] = { -INFINITY, -INFINITY };
+  double upper_bound[2] = { INFINITY, INFINITY };
+
+
+  /***************************** CREATE RANDOM ***************************/
+  r1 = (double *) calloc(n, sizeof(double) );
+  r2 = (double *) calloc(n, sizeof(double) );
+  /***************************** CREATE RANDOM ***************************/
+
+
+  /***************************** CREATE INDEX ****************************/
+  // note: treeIndex will be destroyed in creating the tree
+  size_t * indexMap = (size_t *) calloc( n , sizeof( size_t ) );
+  size_t * treeIndex = (size_t *) calloc( n , sizeof( size_t ) ); 
+  size_t * reverseIndexMap = (size_t *) calloc( n , sizeof( size_t ) );
+  for( i=0; i< n; i++) {
+    indexMap[i]=i;
+    treeIndex[i]=i;
+    reverseIndexMap[i]=i;
+  }
+  /***************************** CREATE INDEX ****************************/
+
+
+  /***************************** CREATE TREE *****************************/
+  /* 
+   K - dim of each element 
+   m - leafSize 
+   n - number of elements
+   x - data  
+  */
+  rootNodePtr myTree = createTree( K, m, n, x);
+      
+
+//  printf("1. building index...");
+  if( useProb) { 
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, pi, &nodeIdentity ); 
+  } else {
+    myTree->root = buildIndex( myTree, 0, n, treeIndex, useProb, NULL, &nodeIdentity ); 
+  }
+  for( t = 0; t <n; t++) nodeAssignment[t] = (int) myTree->nodeIndex[t];  
+
+  if( bounds[0] != -2 ) {
+    recordBounds( myTree, myTree->root, lower_bound, upper_bound, bounds ); 
+  } 
+
+  /***************************** CREATE TREE *****************************/
+
+  /* save a copy of the tree index */
+  if( draws > 1 ) {
+    backupTreeIndex = (size_t *) calloc( n , sizeof( size_t ) ); 
+    for( i=0; i< n; i++) {
+      backupTreeIndex[i] = *(myTree->pointerIndex[i]);  
+    }
+  }
+
+ 
+  /***************************** RESAMPLE *****************************/
+  for( l=0; l < draws; l++) {
+
+    /* refresh the index */ 
+    if( l > 0 ) { 
+      /* offset pi */
+      pi = pi + n;
+
+      if(recordOrder[0] != -2) {
+        recordOrder = recordOrder + n;
+      }
+
+      for( i=0; i< n; i++) {
+        indexMap[i]=i;
+        reverseIndexMap[i]=i;
+        *(myTree->pointerIndex[i]) =  backupTreeIndex[i]; 
+      }
+    } 
+
+    /* generate values ahead of time to be like lpm2 */ 
+    for( i = 0; i < n; i++) {
+      r1[i] = runif(0.0,1.0);
+    }
+  
+    for( i = 0; i < n; i++) {
+      r2[i] = runif(0.0,1.0);
+    }
+  
+  
+    /***************************** RUN ALGORITHM ***************************/
+    /*for( i = 0; i < n-1; i++) { */
+    for( i = 0; i < 1; i++) {
+ 
+      /* randomly sample point from IndexMap*/
+      /* indexMap below n-i are eligible units */
+      /* this needs to be updated */ 
+      sampled = i + (size_t) floor( r1[i] * (n - i) );
+  
+      /* randomly select j */
+      j = indexMap[sampled]; // j is the original index of the sampled data
+  
+      if( j >=n  ) break;
+  
+      // find neighbor
+      dist = INFINITY;
+      k = n;
+      tieBreak = -1;
+  
+      /* we return all indexes within the selected node */ 
+      nn_sample( 
+            myTree , 
+            myTree->root, 
+            NULL 
+            ); 
+
+      printf("done printing\n");
+
+
+/* 
+      printf("update prob..."); 
+
+  
+      updateProb( 
+         &( pi[j] ), 
+         &( pi[k] ), 
+         r2[i]
+         ); 
+      
+      printf(" done\n"); 
+  
+      printf("i = %d, j = %d", (int) i, (int) j);
+      printf("\nTree Index\n");
+      for( t = 0; t <n; t++) printf("%d ", (int) *(myTree->pointerIndex[t]));  
+      printf("\nindexMap\n");
+      for( t = 0; t <n; t++) printf("%d ", (int) indexMap[t]);
+      printf("reverseIndexMap\n");
+      for( t = 0; t <n; t++) printf("%d ",(int) reverseIndexMap[t]);
+      printf("\n");
+      
+      printf("reverse mapping..."); 
+*/
+      /* handle reverse mapping etc... */
+      /* move is from the reverse mapping since we don't really know the index of k */
+      /* it also is a bit more readable for j instead of grabbing sampled again */
+/*
+      if( pi[j] == 0 || pi[j] == 1 ) {
+        updateMapping(j,i,indexMap,reverseIndexMap);
+        *(myTree->pointerIndex[j]) = n;  // ensure we can't find it again 
+      } else {
+        updateMapping(k,i,indexMap,reverseIndexMap);
+        *(myTree->pointerIndex[k]) = n;  // ensure we can't find it again 
+      }
+      printf(" done\n"); 
+        
+      printf("record order..."); 
+      // record in order
+      if(recordOrder[0] != -2) {
+        if( recordOrder[j] == -1 ) {
+          if(pi[j] == 1)  {
+            recordOrder[j] = (int) order;
+            order++;  
+          }
+        } 
+        if(pi[k] == 1) {
+          if( recordOrder[k] == -1 ) {
+            recordOrder[k] = (int) order;
+            order++;  
+          }
+        } 
+      }
+      printf(" done\n"); 
+*/ 
+  
+    } 
+    /***************************** RUN ALGORITHM ***************************/
+
+  }
+  /***************************** RUN RESAMPLE ***************************/
+ 
+ printf("clean up..."); 
+
+  /* delete tree */
+  deleteTree(myTree);
+
+  // free indexes */
+  free(indexMap);
+  free(reverseIndexMap);
+  free(r1);
+  free(r2);
+
+  if(backupTreeIndex != NULL) free(backupTreeIndex);  
+  
+  PutRNGstate();
+
+  printf("done.\n");
+  return;
+}
+
+
+
+
+
+
+
+

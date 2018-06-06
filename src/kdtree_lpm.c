@@ -535,13 +535,13 @@ void nn_sample(
   // to the left to the left to the left 
   if( c->left != NULL ) {
     printf("going left\n");
-    nn_sample( r, c->left, sample );  
+    nn_sample( r, c->left, p, sample );  
   }
 
   // to the right to the right to the right 
   if( c->right != NULL ) {
     printf("going right\n");
-    nn_sample( r, c->right, sample );  
+    nn_sample( r, c->right, p, sample );  
   }
 
   // if you like it, take a sample from it 
@@ -550,10 +550,12 @@ void nn_sample(
     for( i=0; i < c->indexUsed ; i++ ) printf("%d\n", (int) c->index[i]);
     //create a prob_array, we get a free sort from this 
 
+    /*
     prob_sum; 
     for( i=1; i < c->indexUsed; i++ ) {
       RUNIF( );  
     }
+    */
 
 //    printf("sampled %d\n", (int) sample_one(c->indexUsed, prob_array, c->index) ); 
   

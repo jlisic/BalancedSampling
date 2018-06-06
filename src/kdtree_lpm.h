@@ -137,6 +137,7 @@ size_t getClosestTie(
 void nn_sample( 
     rootNodePtr r, 
     nodePtr c, 
+    double * p,
     size_t * sample 
     ); 
 

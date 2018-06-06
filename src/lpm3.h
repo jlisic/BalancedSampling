@@ -60,14 +60,8 @@ void R_lpm4(
     int * nPtr,
     int * KPtr, 
     int * mPtr,
-    int * algorithmPtr,
-    int * maxCountPtr,
-    double * termDist,
-    int * recordOrder, 
-    int * drawsPtr, /* resampling count */
     int * useProbPtr,
-    int * nodeAssignment,
-    double * bound 
+    int * nodeAssignment
   );
 
 

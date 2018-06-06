@@ -72,19 +72,14 @@ lpm2_kdtree <- function(
   # send our data to the C program
   r.result <- .C("R_lpm4",
                  as.double( t(x) ),                 # data we query
-                 as.double( rep(prob,resample) ),   # probability vector
+                 as.double( prob ),   # probability vector
                  as.integer( n ),                   # length of prob and nrow of x 
                  as.integer( K ),                   # number of columns of x 
                  as.integer( m ),                   # max leaves per node
-                 as.integer( algorithm ),           # algorithm to use 
-                 as.integer( maxCheck ),            # number of leaves to check
-                 as.double( termDist ),             # terminal distance 
-                 as.integer(rep(recordOrder,resample)),           # in order vector
-                 as.integer(resample),              # number of samples to re-draw
                  as.integer(probTree),
-                 as.integer( rep(0,n) ),            # node assignment 
-                 as.double( bounds )
+                 as.integer( rep(0,n) )            # node assignment 
   )
+  return( r.result )
   }
 
   node_index <- r.result[[12]]

@@ -138,7 +138,7 @@ IntegerVector scps(
 					weight = weight-uw;
 					if(weight<eps){break;}
 				}
-        Rprintf("%d: k = %d\n", (int) i, (int) k);
+        //Rprintf("%d: k = %d\n", (int) i, (int) k);
 			}	 // <- end weight distribution
 		}
 	}

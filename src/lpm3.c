@@ -437,15 +437,6 @@ void R_split_sample(
     
   for( k = 0; k < n-1; k++) {
 
-    /*
-    printf("%d: ", n);
-    for( i = 0; i < n; i++) printf(" %4.2f", pi[i]);
-    printf("\n");
-    
-    printf("%d: ", n);
-    for( i = 0; i < n; i++) printf(" %d", (int) indexMap[i]);
-    printf("\n");
-    */
 
     if( indexMap[k] == n ) continue;
   
@@ -463,7 +454,6 @@ void R_split_sample(
     indexMap[sampled] = indexMap[k+1];
     indexMap[k+1] = n;
 
-//printf("i = %d, j = %d\n", (int) i, (int) j );
 
     //  update prob... 
     updateProb( 

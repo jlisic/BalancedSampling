@@ -65,5 +65,12 @@ void R_lpm4(
   );
 
 
+/* split sampling R interface */
+void R_split_sample(
+    double * pi,
+    int * nPtr,
+    double * delta
+); 
+
 
 #endif

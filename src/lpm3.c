@@ -393,6 +393,107 @@ void R_lpm4(
 
 
 
+/* the R interface */
+void R_split_sample(
+    double * pi,
+    int * nPtr,
+    double * delta
+) {
+  
+  GetRNGstate();
+
+  int n = *nPtr;
+
+  /***************************** CREATE RANDOM ***************************/
+  double * r1 = (double *) calloc(n, sizeof(double) );
+  double * r2 = (double *) calloc(n, sizeof(double) );
+  double * U = (double *) calloc(n, sizeof(double) );
+  /***************************** CREATE RANDOM ***************************/
+
+  size_t i,j,k; 
+  size_t sampled;
+
+
+  /***************************** CREATE INDEX ****************************/
+  // note: treeIndex will be destroyed in creating the tree
+  size_t * indexMap = (size_t *) calloc( n , sizeof( size_t ) );
+  for( i=0; i< n; i++) {
+    indexMap[i]=i;
+  }
+  /***************************** CREATE INDEX ****************************/
+
+ 
+  /***************************** RESAMPLE *****************************/
+  /* generate values ahead of time to be like lpm2 */ 
+  for( i = 0; i < n; i++) {
+    r1[i] = runif(0.0,1.0);
+  }
+  for( i = 0; i < n; i++) {
+    r2[i] = runif(0.0,1.0);
+  }
+  for( i = 0; i < n; i++) {
+    U[i] = runif(0.0,1.0);
+  }
+    
+  for( k = 0; k < n-1; k++) {
+
+    /*
+    printf("%d: ", n);
+    for( i = 0; i < n; i++) printf(" %4.2f", pi[i]);
+    printf("\n");
+    
+    printf("%d: ", n);
+    for( i = 0; i < n; i++) printf(" %d", (int) indexMap[i]);
+    printf("\n");
+    */
+
+    if( indexMap[k] == n ) continue;
+  
+    /* randomly select j */
+    sampled = k  + (size_t) floor( r1[k] * (n - k) );
+    i = indexMap[sampled]; 
+
+    indexMap[sampled] = indexMap[k];
+    indexMap[k] = n;
+
+    /* randomly select i */ 
+    sampled = k+1  + (size_t) floor( r2[k] * (n - k -1) );
+    j = indexMap[sampled]; 
+
+    indexMap[sampled] = indexMap[k+1];
+    indexMap[k+1] = n;
+
+//printf("i = %d, j = %d\n", (int) i, (int) j );
+
+    //  update prob... 
+    updateProb( 
+       &( pi[i] ), 
+       &( pi[j] ), 
+       U[k]
+       ); 
+        
+    /* handle reverse mapping etc... */
+    /* move is from the reverse mapping since we don't really know the index of k */
+    /* it also is a bit more readable for j instead of grabbing sampled again */
+    if( (pi[i] > *delta) && (pi[i] + *delta) < 1 ) {
+      indexMap[k+1] = i;
+      continue; 
+    } 
+    
+    if( (pi[j] > *delta) && (pi[j] + *delta) < 1 ) {
+      indexMap[k+1] = j;
+    } 
+      
+  }
+  
+  PutRNGstate();
+
+  free(indexMap);
+  free(r1);
+  free(r2);
+  free(U);
+}
+
 
 
 

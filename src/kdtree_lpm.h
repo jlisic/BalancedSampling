@@ -133,13 +133,6 @@ size_t getClosestTie(
     double * tieBreak // tie 
     ); 
 
-// function to find neighbors 
-void nn_sample( 
-    rootNodePtr r, 
-    nodePtr c, 
-    double * p,
-    size_t * sample 
-    ); 
 
 // function to find neighbors 
 size_t find_nn_notMe( 

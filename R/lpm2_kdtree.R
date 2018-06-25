@@ -77,7 +77,8 @@ lpm2_kdtree <- function(
                  as.integer( K ),                   # number of columns of x 
                  as.integer( m ),                   # max leaves per node
                  as.integer(probTree),
-                 as.integer( rep(0,n) )            # node assignment 
+                 as.integer( rep(0,n) ),            # node assignment 
+                 as.double( min(prob)/2 )
   )
   return( r.result )
   }

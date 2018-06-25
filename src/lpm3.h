@@ -61,8 +61,27 @@ void R_lpm4(
     int * KPtr, 
     int * mPtr,
     int * useProbPtr,
-    int * nodeAssignment
+    int * nodeAssignment,
+    double * delta
   );
+
+/* split sampling R interface */
+void split_sample(
+    double * pi,
+    size_t  n,
+    double * delta,
+    size_t * indexMap,
+    size_t max_size
+); 
+
+
+// function to find neighbors 
+void nn_sample( 
+    rootNodePtr r, 
+    nodePtr c, 
+    double * p,
+    double * delta
+    ); 
 
 
 /* split sampling R interface */

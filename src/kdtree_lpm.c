@@ -518,52 +518,6 @@ size_t getClosestTie(
 }
 
 
-// find the leaf node that contains the nearest neighbor 
-// for the queried row (query).
-void nn_sample( 
-    rootNodePtr r, 
-    nodePtr c, 
-    double * p, // probability
-    size_t * sample 
-  ) {
-
-  size_t i;
-  
-  // return if c == NULL 
-  if( c == NULL ) return;
-
-  // to the left to the left to the left 
-  if( c->left != NULL ) {
-    printf("going left\n");
-    nn_sample( r, c->left, p, sample );  
-  }
-
-  // to the right to the right to the right 
-  if( c->right != NULL ) {
-    printf("going right\n");
-    nn_sample( r, c->right, p, sample );  
-  }
-
-  // if you like it, take a sample from it 
-  if( (c->left == NULL) & (c->right == NULL) ) {
-    printf("leaf node:\n");
-    for( i=0; i < c->indexUsed ; i++ ) printf("%d\n", (int) c->index[i]);
-    //create a prob_array, we get a free sort from this 
-
-    /*
-    prob_sum; 
-    for( i=1; i < c->indexUsed; i++ ) {
-      RUNIF( );  
-    }
-    */
-
-//    printf("sampled %d\n", (int) sample_one(c->indexUsed, prob_array, c->index) ); 
-  
-  }
-
-  return;
-}
-
 
 
 

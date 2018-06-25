@@ -342,6 +342,51 @@ void R_lpm3(
 /* Approximate Algorithm: kd tree strat SRS             */
 /********************************************************/
 
+
+// * sampling method *
+// find the leaf node that contains the nearest neighbor 
+// for the queried row (query).
+void nn_sample( 
+    rootNodePtr r, 
+    nodePtr c, 
+    double * p, // probability
+    double * delta
+  ) {
+
+  //size_t i;
+  
+  // return if c == NULL 
+  if( c == NULL ) return;
+
+  // to the left to the left to the left 
+  if( c->left != NULL ) {
+    //printf("going left\n");
+    nn_sample( r, c->left, p, delta );  
+  }
+
+  // to the right to the right to the right 
+  if( c->right != NULL ) {
+    //printf("going right\n");
+    nn_sample( r, c->right, p, delta);  
+  }
+
+  // if you like it, take a sample from it 
+  if( (c->left == NULL) & (c->right == NULL) ) {
+    /*
+    printf("Before:  leaf node:\n");
+    for( i=0; i < c->indexUsed ; i++ ) printf("%d ", (int) c->index[i]);
+    printf("\n");
+    */
+
+    // take the sample
+    split_sample(p,c->indexUsed,delta,c->index,r->n);
+  
+  }
+
+  return;
+}
+
+
 /* the R interface */
 void R_lpm4(
     double * x,
@@ -350,7 +395,8 @@ void R_lpm4(
     int * KPtr, 
     int * mPtr,
     int * useProbPtr,
-    int * nodeAssignment /* node assignment */
+    int * nodeAssignment, /* node assignment */
+    double * delta
   ) {
 
   size_t n = (size_t) * nPtr;
@@ -361,10 +407,16 @@ void R_lpm4(
 
   size_t nodeIdentity = 0; // the initial nodeIdentity;
   
+  GetRNGstate();
+  
   /***************************** CREATE INDEX ****************************/
   // note: treeIndex will be destroyed in creating the tree
   size_t * treeIndex = (size_t *) calloc( n , sizeof( size_t ) ); 
-  for( i=0; i< n; i++) treeIndex[i]=i;
+  size_t * indexMap = (size_t *) calloc( n , sizeof( size_t ) ); 
+  for( i=0; i< n; i++) {
+    treeIndex[i]=i;
+    indexMap[i]=i;
+  }
 
   /***************************** CREATE TREE *****************************/
   /* 
@@ -383,12 +435,112 @@ void R_lpm4(
   }
   for(i=0;i<n; i++) nodeAssignment[i] = (int) myTree->nodeIndex[i];  
 
- 
+
+  /* sample  */
+   nn_sample( 
+     myTree , 
+     myTree->root, 
+     pi,
+     delta
+   ); 
+
+  //for(i=0;i<n;i++) printf(" %d %4.2f\n",(int)i,pi[i]);
+
   /* delete tree */
   deleteTree(myTree);
+  
+  PutRNGstate();
 
   return;
 }
+
+
+
+
+
+
+/* internal split sample interface  */
+void split_sample(
+    double * pi,
+    size_t n,
+    double * delta,
+    size_t *indexMap,
+    size_t max_size
+) {
+  
+
+  /***************************** CREATE RANDOM ***************************/
+  double * r1 = (double *) calloc(n, sizeof(double) );
+  double * r2 = (double *) calloc(n, sizeof(double) );
+  double * U = (double *) calloc(n, sizeof(double) );
+  /***************************** CREATE RANDOM ***************************/
+
+  size_t i,j,k; 
+  size_t sampled;
+
+
+  /***************************** RESAMPLE *****************************/
+  /* generate values ahead of time to be like lpm2 */ 
+  for( i = 0; i < n; i++) {
+    r1[i] = runif(0.0,1.0);
+  }
+  for( i = 0; i < n; i++) {
+    r2[i] = runif(0.0,1.0);
+  }
+  for( i = 0; i < n; i++) {
+    U[i] = runif(0.0,1.0);
+  }
+    
+  for( k = 0; k < n-1; k++) {
+
+
+    if( indexMap[k] == max_size ) continue;
+  
+    /* randomly select j */
+    sampled = k  + (size_t) floor( r1[k] * (n - k) );
+    i = indexMap[sampled]; 
+
+    indexMap[sampled] = indexMap[k];
+    indexMap[k] = max_size;
+
+    /* randomly select i */ 
+    sampled = k+1  + (size_t) floor( r2[k] * (n - k -1) );
+    j = indexMap[sampled]; 
+
+    indexMap[sampled] = indexMap[k+1];
+    indexMap[k+1] = max_size;
+
+
+    //  update prob... 
+    updateProb( 
+       &( pi[i] ), 
+       &( pi[j] ), 
+       U[k]
+       ); 
+  
+    //printf(" selected %d and %d with new prob %4.2f and %4.2f\n", (int) i, (int) j, pi[i], pi[j]);
+
+    /* handle reverse mapping etc... */
+    /* move is from the reverse mapping since we don't really know the index of k */
+    /* it also is a bit more readable for j instead of grabbing sampled again */
+    if( (pi[i] > *delta) && (pi[i] + *delta) < 1 ) {
+      indexMap[k+1] = i;
+      continue; 
+    } 
+    
+    if( (pi[j] > *delta) && (pi[j] + *delta) < 1 ) {
+      indexMap[k+1] = j;
+    } 
+      
+  }
+  
+
+  free(r1);
+  free(r2);
+  free(U);
+}
+
+
 
 
 

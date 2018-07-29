@@ -1,9 +1,10 @@
 split_sample <- function(
-  prob
+  prob,
+  delta = exp(-16)
 ) {
 
   r_prob <- range(prob)
-  delta <- min( r_prob[1], 1-r_prob[2] )/2
+  #delta <- min( r_prob[1], 1-r_prob[2] )/2
   n <- length(prob)
 
   # send our data to the C program
@@ -13,7 +14,7 @@ split_sample <- function(
                  as.double(delta)
   )
     
-  return( r.result ) 
+  return( which( round(r.result[[1]]) == 1  )) 
 }
 
 

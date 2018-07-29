@@ -565,7 +565,6 @@ void R_split_sample(
   size_t i,j,k; 
   size_t sampled;
 
-
   /***************************** CREATE INDEX ****************************/
   // note: treeIndex will be destroyed in creating the tree
   size_t * indexMap = (size_t *) calloc( n , sizeof( size_t ) );
@@ -577,7 +576,7 @@ void R_split_sample(
  
   /***************************** RESAMPLE *****************************/
   /* generate values ahead of time to be like lpm2 */ 
-  for( i = 0; i < n; i++) {
+  for( i = 0; i < n-1; i++) {
     r1[i] = runif(0.0,1.0);
   }
   for( i = 0; i < n; i++) {
@@ -586,7 +585,7 @@ void R_split_sample(
   for( i = 0; i < n; i++) {
     U[i] = runif(0.0,1.0);
   }
-    
+ 
   for( k = 0; k < n-1; k++) {
 
 
